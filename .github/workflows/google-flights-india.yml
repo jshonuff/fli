@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install repository FLI
-        run: python -m pip install .
+        run: python -m pip install . click
       - name: Search Google Flights MCI to DEL Jan 13-20
         shell: bash
         run: |
