@@ -1,0 +1,42 @@
+name: Basic cloud tools
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    branches: [main]
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/basic-cloud-tools.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: jshonuff/fli
+          ref: main
+      - name: Build preinstalled environment
+        run: docker build -f .devcontainer/Dockerfile -t basic-cloud-tools .
+      - name: Verify all five tools and Python project
+        run: |
+          docker run --rm basic-cloud-tools bash -euc '
+            git --version
+            uv --version
+            node --version
+            npm --version
+            gcc --version
+            g++ --version
+            make --version
+            ffmpeg -version
+            test "$(node -p "process.versions.node.split(\".\")[0]")" = "24"
+            printf "int main(void) { return 0; }\n" > /tmp/cloud-check.c
+            gcc /tmp/cloud-check.c -o /tmp/cloud-check
+            /tmp/cloud-check
+            ffmpeg -hide_banner -loglevel error -f lavfi -i sine=frequency=1000:duration=0.1 /tmp/cloud-check.wav
+            test -s /tmp/cloud-check.wav
+            uv pip check
+            fli --help
+          '
