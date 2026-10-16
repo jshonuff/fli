@@ -1,10 +1,17 @@
-FROM python:3.10-slim
+FROM node:24-bookworm-slim AS node
+FROM python:3.11-slim-bookworm
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
-    make \
+    build-essential \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install act (for running GitHub Actions locally)
@@ -23,7 +30,7 @@ COPY pyproject.toml uv.lock README.md ./
 COPY fli/ ./fli/
 
 # Install dependencies
-RUN uv sync --extra dev --frozen
+RUN uv sync --extra dev
 
 # Copy the rest of the project
 COPY . .
